@@ -19,7 +19,9 @@ const axios = require("axios");
 
 /* ================= Utility functions ================= */
 
-const axiosInstance = axios.create();
+const axiosInstance = axios.create({
+  baseURL: window.location.origin + window.location.pathname.slice(0, -1),
+});
 export { axiosInstance };
 
 function resolveProviderURLParams() {
@@ -105,7 +107,7 @@ export function getTaskConfig() {
 }
 
 export function postProviderRequest(endpoint, data) {
-  var url = new URL(window.location.origin + endpoint).toString();
+  var url = new URL(axiosInstance.default.baseURL + endpoint).toString();
   return postData(url, { provider_data: data, client_timestamp: pythonTime() });
 }
 

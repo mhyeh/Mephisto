@@ -43,6 +43,7 @@ class LocalArchitectArgs(ArchitectArgs):
         default="localhost", metadata={"help": "Addressible location of the server"}
     )
     port: str = field(default="3000", metadata={"help": "Port to launch the server on"})
+    public_port: str = field(default=None, metadata={"help": "Public port to launch the server on"})
 
 
 @register_mephisto_abstraction()
@@ -75,6 +76,7 @@ class LocalArchitect(Architect):
         self.running_dir: Optional[str] = None
         self.hostname: Optional[str] = args.architect.hostname
         self.port: Optional[str] = args.architect.port
+        self.public_port: Optional[str] = args.architect.public_port
         self.cleanup_called = False
         self.server_type = args.architect.server_type
         self.server_source_path = args.architect.get("server_source_path", None)
@@ -96,7 +98,11 @@ class LocalArchitect(Architect):
         if basename in ["localhost", "127.0.0.1"]:
             protocol = "ws"
 
-        return [f"{protocol}://{basename}:{self.port}/"]
+        port = self.public_port if self.public_port else self.port
+
+        if "/" in basename:
+            return [f"{protocol}://{basename}"]
+        return [f"{protocol}://{basename}:{port}/"]
 
     def get_channels(
         self,
@@ -169,7 +175,7 @@ class LocalArchitect(Architect):
         time.sleep(1)
         print("Server running locally with pid {}.".format(self.server_process_pid))
         host = self.hostname
-        port = self.port
+        port = self.public_port if self.public_port else self.port
         if host is None:
             host = input(
                 "Please enter the public server address, like https://hostname.com: "
@@ -178,6 +184,16 @@ class LocalArchitect(Architect):
         if port is None:
             port = input("Please enter the port given above, likely 3000: ")
             self.port = port
+
+        if "https://" in host:
+            basename = host.split("https://")[1]
+        elif "http://" in host:
+            basename = host.split("http://")[1]
+        else:
+            basename = host
+        
+        if "/" in basename:
+            return host
         return "{}:{}".format(host, port)
 
     def cleanup(self) -> None:

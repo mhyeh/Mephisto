@@ -278,8 +278,13 @@ function useMephistoSocket({
 
     // Inherit socket protocol from web address protocol
     let socketProtocol = browserUrl.protocol == "https:" ? "wss://" : "ws://";
-    let socketUrl =
-      socketProtocol + browserUrl.hostname + ":" + browserUrl.port;
+    let socketUrl = socketProtocol + browserUrl.hostname;
+    if (browserUrl.port !== "") {
+      socketUrl += ":" + browserUrl.port;
+    }
+    if (browserUrl.pathname !== "") {
+      socketUrl += browserUrl.pathname;
+    }
     socket.current = new WebSocket(socketUrl);
 
     // TODO if socket setup fails here, see if 404 or timeout, then check
